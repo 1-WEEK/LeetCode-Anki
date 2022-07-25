@@ -13,6 +13,17 @@ def random_id():
 
 
 def markdown_to_html(content: str):
+    # 删除无效的语言标志
+    content = re.sub(
+        pattern=r"\[.*?\]",
+        repl="",
+        string=content
+    )
+    content = re.sub(
+        pattern="```",
+        repl="``` ",
+        string=content
+    )
     # replace the math symbol "$x$" to "\[$]x\[/$]" to make it compatible with mathjax
     content = re.sub(
         pattern=r"\$(.*?)\$",
@@ -20,8 +31,10 @@ def markdown_to_html(content: str):
         string=content
     )
 
+    result = markdown(content, extensions=['mdx_math', 'toc', 'fenced_code', 'tables'])
+
     # also need to load the mathjax and toc extensions
-    return markdown(content, extensions=['mdx_math', 'toc', 'fenced_code', 'tables'])
+    return result
 
 
 def code_to_html(source, language):
