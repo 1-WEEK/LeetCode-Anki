@@ -21,14 +21,11 @@ class LeetCodeCrawler:
         self.session = requests.Session()
         self.session.headers.update(
             {
-                'Host': 'leetcode-cn.com',
                 'Cache-Control': 'max-age=0',
                 'Upgrade-Insecure-Requests': '1',
-                'Referer': 'https://leetcode-cn.com/accounts/login/',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
                 'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6',
-                'Connection': 'keep-alive'
             }
         )
 
@@ -132,12 +129,13 @@ class LeetCodeCrawler:
 
     def fetch_lastSubmission(self,slug):
         query_params = {
-                           "operationName":"lastSubmission",
+                           "operationName":"submissions",
                            "variables":{
-                               "lang":"java",
+                               "offset": 0,
+                                "limit": 40,
                                "questionSlug":slug
                            },
-                           "query":"query lastSubmission($questionSlug: String!, $lang: String!) {\n  lastSubmission(questionSlug: $questionSlug, lang: $lang) {\n    id\n    statusDisplay\n    lang\n    runtime\n    timestamp\n    url\n    isPending\n    memory\n    submissionComment {\n      comment\n      flagType\n      __typename\n    }\n    __typename\n  }\n}\n"
+                           "query":"query submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $markedOnly: Boolean, $lang: String) {\n  submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug, markedOnly: $markedOnly, lang: $lang) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      statusDisplay\n      lang\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n        flagType\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"
                        }
 
         resp = self.session.post("https://leetcode-cn.com/graphql",
@@ -148,7 +146,7 @@ class LeetCodeCrawler:
         body = json.loads(resp.content)
 
         # parse data
-        solutionid = get(body, "data.lastSubmission")['id']
+        solutionid = get(body, "data.submissionList.submissions")[0]['id']
         self.fetch_mySubmissionDetail(solutionid,slug)
 
     def fetch_mySubmissionDetail(self,solutionid,slug):
